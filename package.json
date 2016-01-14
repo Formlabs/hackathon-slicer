@@ -16,5 +16,12 @@
     "gulp-util": "^3.0.3",
     "vinyl-source-stream": "^1.0.0",
     "watchify": "^2.3.0"
+  },
+  "dependencies": {
+    "gl-matrix": "^2.3.1",
+    "glslify": "^2.0.0"
+  },
+  "browserify": {
+    "transform": ["glslify"]
   }
 }
