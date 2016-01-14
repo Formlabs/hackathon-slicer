@@ -1,7 +1,8 @@
+var glslify = require('glslify')
+var upload  = require('./upload.js');
+
 var canvas = document.getElementById("canvas");
 var gl = canvas.getContext("experimental-webgl");
-
-var glslify = require('glslify')
 
 function build_shader(txt, type)
 {
@@ -31,23 +32,28 @@ function make_program()
     return prog;
 }
 
-var prog = make_program();
-gl.useProgram(prog);
+function main()
+{
+    var prog = make_program();
+    gl.useProgram(prog);
 
-var buffer = gl.createBuffer();
-gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-gl.bufferData(
-    gl.ARRAY_BUFFER,
-    new Float32Array([
-        -1.0, -1.0,
-         1.0, -1.0,
-        -1.0,  1.0,
-         1.0,  1.0]),
-    gl.STATIC_DRAW);
-var vpos_loc = gl.getAttribLocation(prog, "vert_pos");
-gl.enableVertexAttribArray(vpos_loc);
-gl.vertexAttribPointer(vpos_loc, 2, gl.FLOAT, false, 0, 0);
+    var buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([
+            -1.0, -1.0,
+             1.0, -1.0,
+            -1.0,  1.0,
+             1.0,  1.0]),
+        gl.STATIC_DRAW);
+    var vpos_loc = gl.getAttribLocation(prog, "vert_pos");
+    gl.enableVertexAttribArray(vpos_loc);
+    gl.vertexAttribPointer(vpos_loc, 2, gl.FLOAT, false, 0, 0);
 
-gl.uniform1f(gl.getUniformLocation(prog, "width"), canvas.width);
-gl.uniform1f(gl.getUniformLocation(prog, "height"), canvas.height);
-gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.uniform1f(gl.getUniformLocation(prog, "width"), canvas.width);
+    gl.uniform1f(gl.getUniformLocation(prog, "height"), canvas.height);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+
+main();
