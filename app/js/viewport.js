@@ -23,8 +23,9 @@ let slice = makeSlice();
 
 function makeSlice()
 {
-    let slice = {"buf": gl.createFramebuffer(),
-                 "tex": gl.createTexture()};
+    let slice = {"fbo": gl.createFramebuffer(),
+                 "tex": gl.createTexture(),
+                 "buf": gl.createRenderbuffer()};
 
     slice.prog = makeProgram(
         glslify(__dirname + '/../shaders/slice.vert'),
@@ -82,7 +83,7 @@ function mouseMoveListener(event)
         }
         else
         {
-            scene.roll  += (mouse.pos.x - event.clientX) / 100.0;
+            scene.roll  -= (mouse.pos.x - event.clientX) / 100.0;
             scene.pitch += (mouse.pos.y - event.clientY) / 100.0;
         }
 
@@ -153,7 +154,7 @@ function viewMatrix()
     let v = glm.mat4.create();
     glm.mat4.rotateX(v, v, scene.pitch);
     glm.mat4.rotateZ(v, v, scene.roll);
-    glm.mat4.scale(v, v, [0.5, 0.5, 0.5]);
+    glm.mat4.scale(v, v, [1, 1, -1]);
 
     return v;
 }
@@ -353,17 +354,28 @@ function loadMesh(stl)
 
 function renderSlice()
 {
+    // We won't be using the depth test in this rendering pass
+    gl.disable(gl.DEPTH_TEST);
+    gl.enable(gl.STENCIL_TEST);
+
     // Bind the target framebuffer
-    gl.bindFramebuffer(gl.FRAMEBUFFER, slice.buf);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, slice.fbo);
 
     // Attach our output texture
     gl.framebufferTexture2D(
         gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
         gl.TEXTURE_2D, slice.tex, 0);
 
+    // Bind the renderbuffer to get a stencil buffer
+    gl.bindRenderbuffer(gl.RENDERBUFFER, slice.buf);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_STENCIL, 500, 500);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_STENCIL_ATTACHMENT,
+                               gl.RENDERBUFFER, slice.buf);
+
     // Clear texture
     gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.clearStencil(0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
 
     gl.useProgram(slice.prog);
 
@@ -374,14 +386,34 @@ function renderSlice()
     gl.uniform1f(slice.prog.uniform.frac, quad.frac);
     gl.uniform2f(slice.prog.uniform.bounds, mesh.bounds.zmin, mesh.bounds.zmax);
 
+    // Load mesh vertices
     gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vert);
     gl.enableVertexAttribArray(mesh.prog.attrib.v);
     gl.vertexAttribPointer(mesh.prog.attrib.v, 3, gl.FLOAT, false, 0, 0);
 
+    // Draw twice, adding and subtracting values in the stencil buffer
+    // based on the handedness of faces that we encounter
+    gl.stencilFunc(gl.ALWAYS, 0, 0xFF);
+    gl.stencilOpSeparate(gl.BACK,  gl.KEEP, gl.KEEP, gl.INCR);
+    gl.stencilOpSeparate(gl.FRONT, gl.KEEP, gl.KEEP, gl.KEEP);
+    gl.drawArrays(gl.TRIANGLES, 0, mesh.triangles);
+
+    gl.stencilOpSeparate(gl.BACK,  gl.KEEP, gl.KEEP, gl.KEEP);
+    gl.stencilOpSeparate(gl.FRONT, gl.KEEP, gl.KEEP, gl.DECR);
+    gl.drawArrays(gl.TRIANGLES, 0, mesh.triangles);
+
+    // Clear the color bit in preparation for a redraw
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    // Draw again, discarding samples if the stencil buffer != 0
+    gl.stencilOp(gl.KEEP, gl.KEEP, gl.KEEP, gl.KEEP);
+    gl.stencilFunc(gl.NOTEQUAL, 0, 0xFF);
     gl.drawArrays(gl.TRIANGLES, 0, mesh.triangles);
 
     // Restore the default framebuffer
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.enable(gl.DEPTH_TEST);
+    gl.disable(gl.STENCIL_TEST);
 }
 
 module.exports = {'init': init, 'loadMesh': loadMesh};
