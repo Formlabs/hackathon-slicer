@@ -16,11 +16,11 @@ let gl = canvas.getContext("experimental-webgl");
 let mouse = {};
 
 // Model object
-let mesh = {"loaded": false, "roll": 0, "pitch": 0};
+let mesh = {"loaded": false};
 let quad = makeQuad();
 let base = makeBase();
 
-let scene = {"roll": 0, "pitch": 0};
+let scene = {"roll": 45, "pitch": 45};
 
 let slice = makeSlice();
 
