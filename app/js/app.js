@@ -1,8 +1,7 @@
 'use strict';
 
-var MESH;
-
 var viewport = require('./viewport.js');
+require('./upload.js');
 
 function main()
 {
