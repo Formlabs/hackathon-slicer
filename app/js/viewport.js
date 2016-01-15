@@ -1,26 +1,22 @@
 'use strict';
 
-
-////////////////////////////////////////////////////////////////////////////////
-
 let _ = require('underscore');
 let glslify = require('glslify')
 let glm = require('gl-matrix');
 
+////////////////////////////////////////////////////////////////////////////////
+
 let canvas = document.getElementById("canvas");
 let gl = canvas.getContext("experimental-webgl");
 
-let prog = make_program();
+let mesh_prog = make_mesh_program();
 
 let mouse = {};
 let roll = 0;
 let pitch = 0;
-let triangles = 0;
 
-// Model transform matrix
-let M = glm.mat4.create();
-
-let loaded = false;
+// Model object
+let mesh = {"loaded": false};
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -62,7 +58,7 @@ function build_shader(txt, type)
     return s;
 }
 
-function make_program()
+function make_mesh_program()
 {
     let v = build_shader(
         glslify(__dirname + '/../shaders/base-3d.vert'), gl.VERTEX_SHADER);
@@ -74,6 +70,14 @@ function make_program()
     gl.attachShader(prog, f);
     gl.linkProgram(prog);
 
+    prog.uniform = {}
+    prog.uniform.view = gl.getUniformLocation(prog, "view");
+    prog.uniform.model = gl.getUniformLocation(prog, "model");
+
+    prog.attrib = {}
+    prog.attrib.vert = gl.getAttribLocation(prog, "v");
+    prog.attrib.norm = gl.getAttribLocation(prog, "n");
+
     return prog;
 }
 
@@ -83,10 +87,17 @@ function init()
     canvas.addEventListener("mousemove", mouseMoveListener, false);
     canvas.addEventListener("mouseup",   mouseUpListener, false);
 
-    gl.useProgram(prog);
-
     gl.enable(gl.DEPTH_TEST);
     draw();
+}
+
+function view_matrix()
+{
+    let view = glm.mat4.create();
+    glm.mat4.rotateY(view, view, roll);
+    glm.mat4.rotateX(view, view, pitch);
+
+    return view;
 }
 
 function draw()
@@ -94,16 +105,29 @@ function draw()
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    if (loaded)
+    if (mesh.loaded)
     {
-        let v = glm.mat4.create();
-        glm.mat4.rotateY(v, v, roll);
-        glm.mat4.rotateX(v, v, pitch);
+        gl.useProgram(mesh_prog);
 
-        gl.uniformMatrix4fv(gl.getUniformLocation(prog, "view"), false, v);
-        gl.uniformMatrix4fv(gl.getUniformLocation(prog, "model"), false, M);
-        gl.drawArrays(gl.TRIANGLES, 0, triangles);
+        gl.uniformMatrix4fv(mesh_prog.uniform.view, false, view_matrix());
+        gl.uniformMatrix4fv(mesh_prog.uniform.model, false, mesh.M);
+
+        console.log(mesh);
+        gl.bindBuffer(gl.ARRAY_BUFFER, mesh.norm);
+        gl.enableVertexAttribArray(mesh_prog.attrib.norm);
+        gl.vertexAttribPointer(mesh_prog.attrib.norm, 3, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vert);
+        gl.enableVertexAttribArray(mesh_prog.attrib.vert);
+        gl.vertexAttribPointer(mesh_prog.attrib.vert, 3, gl.FLOAT, false, 0, 0);
+
+        gl.drawArrays(gl.TRIANGLES, 0, mesh.triangles);
     }
+}
+
+function makeQuad()
+{
+
 }
 
 function loadMesh(stl)
@@ -121,24 +145,22 @@ function loadMesh(stl)
     let zmax = _.max(xyz[2]);
 
     let scale = 1.5 / _.max([zmax - zmin, ymax - ymin, xmax - xmin]);
-    M = glm.mat4.create();
-    glm.mat4.scale(M, M, glm.vec3.fromValues(scale, scale, scale));
-    glm.mat4.translate(M, M, glm.vec3.fromValues(-(xmin + xmax) / 2,
-                                                 -(ymin + ymax) / 2,
-                                                 -(zmin + zmax) / 2));
+
+    // Store mesh transform matrix
+    mesh.M = glm.mat4.create();
+    glm.mat4.scale(mesh.M, mesh.M, glm.vec3.fromValues(scale, scale, scale));
+    glm.mat4.translate(mesh.M, mesh.M, glm.vec3.fromValues(-(xmin + xmax) / 2,
+                                                           -(ymin + ymax) / 2,
+                                                           -(zmin + zmax) / 2));
 
     // Load vertex positions into a buffer
-    let vert_buffer = gl.createBuffer();
     let flattened = _.flatten(stl.positions);
-    gl.bindBuffer(gl.ARRAY_BUFFER, vert_buffer);
+    mesh.vert = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vert);
     gl.bufferData(
         gl.ARRAY_BUFFER,
         new Float32Array(flattened),
         gl.STATIC_DRAW);
-
-    let v = gl.getAttribLocation(prog, "v");
-    gl.enableVertexAttribArray(v);
-    gl.vertexAttribPointer(v, 3, gl.FLOAT, false, 0, 0);
 
     // Load normals into a second buffer
     let norms = new Float32Array(flattened.length);
@@ -161,22 +183,18 @@ function loadMesh(stl)
             }
         }
     }
-
-    let norm_buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, norm_buffer);
+    mesh.norm = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, mesh.norm);
     gl.bufferData(
         gl.ARRAY_BUFFER,
         norms,
         gl.STATIC_DRAW);
 
-    let n = gl.getAttribLocation(prog, "n");
-    gl.enableVertexAttribArray(n);
-    gl.vertexAttribPointer(n, 3, gl.FLOAT, false, 0, 0);
-
     // Store the number of triangles
-    triangles = stl.positions.length;
+    mesh.triangles = stl.positions.length;
 
-    loaded = true;
+    mesh.loaded = true;
+
     draw();
 }
 
