@@ -13,6 +13,7 @@ let prog = make_program();
 let mouse = {};
 let roll = 0;
 let pitch = 0;
+let triangles = 0;
 
 let loaded = false;
 
@@ -94,16 +95,19 @@ function draw()
         glm.mat4.rotateY(m, m, roll);
 
         gl.uniformMatrix4fv(gl.getUniformLocation(prog, "m"), false, m);
-        gl.drawArrays(gl.TRIANGLES, 0, 50);
+        gl.drawArrays(gl.TRIANGLES, 0, triangles);
     }
 }
 
 function loadMesh(stl) {
     let buffer = gl.createBuffer();
+
+    var flattened = [].concat.apply([], stl.positions);
+
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(
         gl.ARRAY_BUFFER,
-        new Float32Array(stl.cells),
+        new Float32Array(flattened),
         gl.STATIC_DRAW);
 
     gl.useProgram(prog);
@@ -111,6 +115,9 @@ function loadMesh(stl) {
     gl.enableVertexAttribArray(v);
     gl.vertexAttribPointer(v, 3, gl.FLOAT, false, 0, 0);
 
+    triangles = stl.positions.length;
+
+    draw();
     loaded = true;
 }
 
