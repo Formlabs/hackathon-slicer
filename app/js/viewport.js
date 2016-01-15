@@ -117,8 +117,8 @@ function loadMesh(stl) {
 
     triangles = stl.positions.length;
 
-    draw();
     loaded = true;
+    draw();
 }
 
 module.exports = {'init': init, 'loadMesh': loadMesh};
