@@ -7,5 +7,5 @@ varying mediump vec3 norm;
 
 void main() {
     gl_Position = m * vec4(v, 1);
-    norm = abs(m * vec4(n, 1)).xyz;
+    norm = abs(n);
 }
