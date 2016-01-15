@@ -17,6 +17,9 @@ let roll = 0;
 let pitch = 0;
 let triangles = 0;
 
+// Model transform matrix
+let M = glm.mat4.create();
+
 let loaded = false;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -95,6 +98,7 @@ function draw()
         let m = glm.mat4.create();
         glm.mat4.rotateX(m, m, pitch);
         glm.mat4.rotateY(m, m, roll);
+        glm.mat4.multiply(m, m, M);
 
         gl.uniformMatrix4fv(gl.getUniformLocation(prog, "m"), false, m);
         gl.drawArrays(gl.TRIANGLES, 0, triangles);
@@ -104,7 +108,24 @@ function draw()
 function loadMesh(stl) {
     let buffer = gl.createBuffer();
 
-    var flattened = _.flatten(stl.positions);
+    let flattened = _.flatten(stl.positions);
+    let xyz = _.unzip(stl.positions);
+
+    let xmin = _.min(xyz[0]);
+    let xmax = _.max(xyz[0]);
+
+    let ymin = _.min(xyz[1]);
+    let ymax = _.max(xyz[1]);
+
+    let zmin = _.min(xyz[2]);
+    let zmax = _.max(xyz[2]);
+
+    let scale = 1 / _.max([zmax - zmin, ymax - ymin, xmax - xmin]);
+    M = glm.mat4.create();
+    glm.mat4.scale(M, M, glm.vec3.fromValues(scale, scale, scale));
+    glm.mat4.translate(M, M, glm.vec3.fromValues(-(xmin + xmax) / 2,
+                                                 -(ymin + ymax) / 2,
+                                                 -(zmin + zmax) / 2));
 
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(
