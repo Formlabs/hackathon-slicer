@@ -37,8 +37,6 @@ function mouseMoveListener(event)
 
         mouse.pos = {"x": event.clientX,
                      "y": event.clientY};
-        console.log(roll);
-        console.log(pitch);
         draw();
     }
 }
@@ -112,7 +110,6 @@ function init()
 function draw()
 {
     let m = glm.mat4.create();
-    console.log(glm.mat4.rotateX);
     glm.mat4.rotateX(m, m, pitch);
     glm.mat4.rotateY(m, m, roll);
 
