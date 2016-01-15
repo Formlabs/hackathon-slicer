@@ -85,6 +85,7 @@ function init()
 
     gl.useProgram(prog);
 
+    gl.enable(gl.DEPTH_TEST);
     draw();
 }
 
@@ -105,10 +106,9 @@ function draw()
     }
 }
 
-function loadMesh(stl) {
-    let buffer = gl.createBuffer();
-
-    let flattened = _.flatten(stl.positions);
+function loadMesh(stl)
+{
+    // Find bounds and center, then store them in matrix M
     let xyz = _.unzip(stl.positions);
 
     let xmin = _.min(xyz[0]);
@@ -127,17 +127,38 @@ function loadMesh(stl) {
                                                  -(ymin + ymax) / 2,
                                                  -(zmin + zmax) / 2));
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    // Load vertex positions into a buffer
+    let vert_buffer = gl.createBuffer();
+    let flattened = _.flatten(stl.positions);
+    gl.bindBuffer(gl.ARRAY_BUFFER, vert_buffer);
     gl.bufferData(
         gl.ARRAY_BUFFER,
         new Float32Array(flattened),
         gl.STATIC_DRAW);
 
-    gl.useProgram(prog);
     let v = gl.getAttribLocation(prog, "v");
     gl.enableVertexAttribArray(v);
     gl.vertexAttribPointer(v, 3, gl.FLOAT, false, 0, 0);
 
+    // Load normals into a second buffer
+    let nxyz = _.unzip(stl.positions);
+    let nxxx = _.flatten(_.unzip([nxyz[0], nxyz[0], nxyz[0]]));
+    let nyyy = _.flatten(_.unzip([nxyz[1], nxyz[1], nxyz[1]]));
+    let nzzz = _.flatten(_.unzip([nxyz[2], nxyz[2], nxyz[2]]));
+    let norms = _.flatten(_.unzip([nxxx, nyyy, nzzz]));
+
+    let norm_buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, norm_buffer);
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array(norms),
+        gl.STATIC_DRAW);
+
+    let n = gl.getAttribLocation(prog, "n");
+    gl.enableVertexAttribArray(n);
+    gl.vertexAttribPointer(n, 3, gl.FLOAT, false, 0, 0);
+
+    // Store the number of triangles
     triangles = stl.positions.length;
 
     loaded = true;
