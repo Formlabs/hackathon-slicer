@@ -6,17 +6,19 @@
     <link rel='stylesheet' href='css/main.css'>
 </head>
 <body>
-    <h1>Don't Lase Me, Bro Slicer 0.0.0.1</h1>
-
-    <div id="example"></div>
-
-    <canvas id="canvas" width="640" height="640">
-        Your browser doesn't appear to support the
-        <code>&lt;canvas&gt;</code> element.
-    </canvas>
-    <br>
-    <input accept=".stl" type="file" id="upload" size="50">
-
+    <div id="caption">Don't Lase Me, Bro Slicer 0.0.0.1</div>
+    <div class="section group">
+        <div class="col span_1_of_3">
+            <input accept=".stl" type="file" id="upload" size="50">
+            <div id="controlpanel">CONTROLS HERE</div>
+        </div>
+        <div class="col span_2_of_3">
+                <canvas id="canvas" width="640" height="640">
+                    Your browser doesn't appear to support the
+                    <code>&lt;canvas&gt;</code> element.
+                </canvas>
+        </div>
+    </div>
     <script src="js/dist/bundle.js"></script>
 </body>
 </html>
