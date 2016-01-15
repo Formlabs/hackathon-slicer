@@ -141,11 +141,9 @@ function loadMesh(stl)
     gl.vertexAttribPointer(v, 3, gl.FLOAT, false, 0, 0);
 
     // Load normals into a second buffer
-    let nxyz = _.unzip(stl.positions);
-    let nxxx = _.flatten(_.unzip([nxyz[0], nxyz[0], nxyz[0]]));
-    let nyyy = _.flatten(_.unzip([nxyz[1], nxyz[1], nxyz[1]]));
-    let nzzz = _.flatten(_.unzip([nxyz[2], nxyz[2], nxyz[2]]));
-    let norms = _.flatten(_.unzip([nxxx, nyyy, nzzz]));
+    let nxyz = stl.positions;
+    let norms = _.flatten(_.unzip([nxyz, nxyz, nxyz]));
+    console.log(norms);
 
     let norm_buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, norm_buffer);
@@ -156,7 +154,7 @@ function loadMesh(stl)
 
     let n = gl.getAttribLocation(prog, "n");
     gl.enableVertexAttribArray(n);
-    gl.vertexAttribPointer(n, 3, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(n, 3, gl.FLOAT, true, 0, 0);
 
     // Store the number of triangles
     triangles = stl.positions.length;
