@@ -14,6 +14,8 @@ let mouse = {};
 let roll = 0;
 let pitch = 0;
 
+let loaded = false;
+
 ////////////////////////////////////////////////////////////////////////////////
 
 function mouseDownListener(event)
@@ -82,14 +84,18 @@ function init()
 
 function draw()
 {
-    let m = glm.mat4.create();
-    glm.mat4.rotateX(m, m, pitch);
-    glm.mat4.rotateY(m, m, roll);
-
-    gl.uniformMatrix4fv(gl.getUniformLocation(prog, "m"), false, m);
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.TRIANGLES, 0, 50);
+
+    if (loaded)
+    {
+        let m = glm.mat4.create();
+        glm.mat4.rotateX(m, m, pitch);
+        glm.mat4.rotateY(m, m, roll);
+
+        gl.uniformMatrix4fv(gl.getUniformLocation(prog, "m"), false, m);
+        gl.drawArrays(gl.TRIANGLES, 0, 50);
+    }
 }
 
 function loadMesh(stl) {
@@ -104,6 +110,8 @@ function loadMesh(stl) {
     let v = gl.getAttribLocation(prog, "v");
     gl.enableVertexAttribArray(v);
     gl.vertexAttribPointer(v, 3, gl.FLOAT, false, 0, 0);
+
+    loaded = true;
 }
 
 module.exports = {'init': init, 'loadMesh': loadMesh};
