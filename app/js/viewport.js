@@ -77,33 +77,6 @@ function init()
 
     gl.useProgram(prog);
 
-    let buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(
-        gl.ARRAY_BUFFER,
-        new Float32Array([
-            -0.5, -0.5, -0.5,
-             0.5, -0.5, -0.5,
-            -0.5,  0.5, -0.5,
-
-            -0.5, -0.5, -0.5,
-             0.5, -0.5, -0.5,
-             0.0, 0.0, 0.0,
-
-             0.5, -0.5, -0.5,
-            -0.5,  0.5, -0.5,
-             0.0, 0.0, 0.0,
-
-            -0.5,  0.5, -0.5,
-            -0.5, -0.5, -0.5,
-             0.0, 0.0, 0.0]),
-        gl.STATIC_DRAW);
-
-    gl.useProgram(prog);
-    let v = gl.getAttribLocation(prog, "v");
-    gl.enableVertexAttribArray(v);
-    gl.vertexAttribPointer(v, 3, gl.FLOAT, false, 0, 0);
-
     draw();
 }
 
@@ -116,7 +89,21 @@ function draw()
     gl.uniformMatrix4fv(gl.getUniformLocation(prog, "m"), false, m);
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.TRIANGLES, 0, 12);
+    gl.drawArrays(gl.TRIANGLES, 0, 50);
 }
 
-module.exports = {'init': init};
+function loadMesh(stl) {
+    let buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array(stl.cells),
+        gl.STATIC_DRAW);
+
+    gl.useProgram(prog);
+    let v = gl.getAttribLocation(prog, "v");
+    gl.enableVertexAttribArray(v);
+    gl.vertexAttribPointer(v, 3, gl.FLOAT, false, 0, 0);
+}
+
+module.exports = {'init': init, 'loadMesh': loadMesh};
