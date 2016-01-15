@@ -1,7 +1,8 @@
 'use strict';
 
-var viewport = require('./viewport.js');
+let viewport = require('./viewport.js');
 require('./upload.js');
+require('./slicer.js');
 
 function main()
 {

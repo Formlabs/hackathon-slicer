@@ -5,8 +5,6 @@ document.getElementById("upload").onchange = function(evt) {
     let fileInput = document.getElementById("upload");
     let file = fileInput.files[0];
 
-    console.log(file);
-
     let reader = new FileReader();
 
     reader.onload = function() {

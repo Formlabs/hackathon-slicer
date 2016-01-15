@@ -18,6 +18,7 @@ let mouse = {};
 // Model object
 let mesh = {"loaded": false, "roll": 0, "pitch": 0};
 let quad = makeQuad();
+let base = makeBase();
 
 let scene = {"roll": 0, "pitch": 0};
 
@@ -156,9 +157,10 @@ function init()
 function viewMatrix()
 {
     let v = glm.mat4.create();
+    glm.mat4.scale(v, v, [1, 1, 0.5]);
     glm.mat4.rotateX(v, v, scene.pitch);
     glm.mat4.rotateZ(v, v, scene.roll);
-    glm.mat4.scale(v, v, [1, 1, -1]);
+    glm.mat4.scale(v, v, [0.75, 0.75, -0.75]);
 
     return v;
 }
@@ -190,6 +192,23 @@ function drawMesh(mesh)
     gl.vertexAttribPointer(mesh.prog.attrib.n, 3, gl.FLOAT, false, 0, 0);
 
     gl.drawArrays(gl.TRIANGLES, 0, mesh.triangles);
+}
+
+function drawBase(base)
+{
+    gl.useProgram(base.prog);
+    gl.uniformMatrix4fv(base.prog.uniform.view, false, viewMatrix());
+    gl.uniform1f(base.prog.uniform.zmin, mesh.bounds.zmin);
+
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, base.vert);
+    gl.enableVertexAttribArray(base.prog.attrib.v);
+    gl.vertexAttribPointer(base.prog.attrib.v, 2, gl.FLOAT, false, 0, 0);
+
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.bindTexture(gl.TEXTURE_2D, null);
 }
 
 function drawQuad(quad)
@@ -227,6 +246,7 @@ function draw()
     {
         drawMesh(mesh, true);
         drawQuad(quad);
+        drawBase(base);
     }
 }
 
@@ -250,6 +270,28 @@ function makeQuad()
 
     quad.frac = 0.5;
     return quad;
+}
+
+function makeBase()
+{
+    let base = {};
+    base.prog = makeProgram(
+        glslify(__dirname + '/../shaders/base.vert'),
+        glslify(__dirname + '/../shaders/base.frag'),
+        ['view', 'zmin'], ['v']);
+
+    base.vert = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, base.vert);
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([-1, -1,
+                          -1,  1,
+                           1, -1,
+                           1,  1]),
+        gl.STATIC_DRAW);
+
+    base.frac = 0.5;
+    return base;
 }
 
 function getMeshBounds()
@@ -419,12 +461,29 @@ function renderSlice()
     gl.stencilFunc(gl.NOTEQUAL, 0, 0xFF);
     gl.drawArrays(gl.TRIANGLES, 0, mesh.triangles);
 
+    // Load the data from the framebuffer
+    let data = new Uint8Array(resolution.x * resolution.y * 4);
+    gl.readPixels(0, 0, resolution.x, resolution.y, gl.RGBA,
+                  gl.UNSIGNED_BYTE, data);
+
     // Restore the default framebuffer
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.enable(gl.DEPTH_TEST);
     gl.disable(gl.STENCIL_TEST);
 
     gl.viewport(0, 0, canvas.width, canvas.height);
+
+    return data;
 }
 
-module.exports = {'init': init, 'loadMesh': loadMesh};
+function getSliceAt(frac)
+{
+    quad.frac = frac;
+    draw();
+    return renderSlice();
+}
+
+module.exports = {'init': init,
+                  'loadMesh': loadMesh,
+                  'getSliceAt': getSliceAt,
+                  'resolution': resolution};
