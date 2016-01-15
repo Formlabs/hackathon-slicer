@@ -96,8 +96,8 @@ function draw()
     if (loaded)
     {
         let m = glm.mat4.create();
-        glm.mat4.rotateX(m, m, pitch);
         glm.mat4.rotateY(m, m, roll);
+        glm.mat4.rotateX(m, m, pitch);
         glm.mat4.multiply(m, m, M);
 
         gl.uniformMatrix4fv(gl.getUniformLocation(prog, "m"), false, m);
