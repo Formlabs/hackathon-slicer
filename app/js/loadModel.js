@@ -1,5 +1,5 @@
 'use strict';
-let parseSTL = require('parse-stl-binary');
+let parseSTL = require('parse-stl');
 let viewPort = require('./viewport.js');
 
 module.exports = loadModel;
