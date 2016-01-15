@@ -9,7 +9,7 @@ let glm = require('gl-matrix');
 let canvas = document.getElementById("canvas");
 let gl = canvas.getContext("experimental-webgl");
 
-let mesh_prog = make_mesh_program();
+let mesh_prog = makeMeshProgram();
 
 let mouse = {};
 let roll = 0;
@@ -45,7 +45,7 @@ function mouseMoveListener(event)
     }
 }
 
-function build_shader(txt, type)
+function buildShader(txt, type)
 {
     let s = gl.createShader(type);
     gl.shaderSource(s, txt);
@@ -58,12 +58,12 @@ function build_shader(txt, type)
     return s;
 }
 
-function make_mesh_program()
+function makeMeshProgram()
 {
-    let v = build_shader(
-        glslify(__dirname + '/../shaders/base-3d.vert'), gl.VERTEX_SHADER);
-    let f = build_shader(
-        glslify(__dirname + '/../shaders/base-3d.frag'), gl.FRAGMENT_SHADER);
+    let v = buildShader(
+        glslify(__dirname + '/../shaders/mesh.vert'), gl.VERTEX_SHADER);
+    let f = buildShader(
+        glslify(__dirname + '/../shaders/mesh.frag'), gl.FRAGMENT_SHADER);
 
     let prog = gl.createProgram();
     gl.attachShader(prog, v);
@@ -91,7 +91,7 @@ function init()
     draw();
 }
 
-function view_matrix()
+function viewMatrix()
 {
     let view = glm.mat4.create();
     glm.mat4.rotateY(view, view, roll);
@@ -109,10 +109,9 @@ function draw()
     {
         gl.useProgram(mesh_prog);
 
-        gl.uniformMatrix4fv(mesh_prog.uniform.view, false, view_matrix());
+        gl.uniformMatrix4fv(mesh_prog.uniform.view, false, viewMatrix());
         gl.uniformMatrix4fv(mesh_prog.uniform.model, false, mesh.M);
 
-        console.log(mesh);
         gl.bindBuffer(gl.ARRAY_BUFFER, mesh.norm);
         gl.enableVertexAttribArray(mesh_prog.attrib.norm);
         gl.vertexAttribPointer(mesh_prog.attrib.norm, 3, gl.FLOAT, false, 0, 0);
