@@ -96,12 +96,12 @@ function draw()
 
     if (loaded)
     {
-        let m = glm.mat4.create();
-        glm.mat4.rotateY(m, m, roll);
-        glm.mat4.rotateX(m, m, pitch);
-        glm.mat4.multiply(m, m, M);
+        let v = glm.mat4.create();
+        glm.mat4.rotateY(v, v, roll);
+        glm.mat4.rotateX(v, v, pitch);
 
-        gl.uniformMatrix4fv(gl.getUniformLocation(prog, "m"), false, m);
+        gl.uniformMatrix4fv(gl.getUniformLocation(prog, "view"), false, v);
+        gl.uniformMatrix4fv(gl.getUniformLocation(prog, "model"), false, M);
         gl.drawArrays(gl.TRIANGLES, 0, triangles);
     }
 }
