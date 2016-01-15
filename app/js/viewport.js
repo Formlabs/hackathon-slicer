@@ -6,6 +6,10 @@ let glm = require('gl-matrix');
 
 ////////////////////////////////////////////////////////////////////////////////
 
+let resolution = {"x": 1280, "y": 800};
+
+////////////////////////////////////////////////////////////////////////////////
+
 let canvas = document.getElementById("canvas");
 let gl = canvas.getContext("experimental-webgl");
 
@@ -33,8 +37,8 @@ function makeSlice()
         ['model','bounds','frac'], ['v']);
 
     gl.bindTexture(gl.TEXTURE_2D, slice.tex);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 500, 500, 0, gl.RGBA,
-                  gl.UNSIGNED_BYTE, null);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, resolution.x, resolution.y,
+                  0, gl.RGBA, gl.UNSIGNED_BYTE, null);
 
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -194,6 +198,9 @@ function drawQuad(quad)
 
     gl.disable(gl.DEPTH_TEST);
     gl.uniformMatrix4fv(quad.prog.uniform.view, false, viewMatrix());
+
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, slice.tex);
@@ -357,6 +364,7 @@ function renderSlice()
     // We won't be using the depth test in this rendering pass
     gl.disable(gl.DEPTH_TEST);
     gl.enable(gl.STENCIL_TEST);
+    gl.viewport(0, 0, resolution.x, resolution.y);
 
     // Bind the target framebuffer
     gl.bindFramebuffer(gl.FRAMEBUFFER, slice.fbo);
@@ -368,7 +376,8 @@ function renderSlice()
 
     // Bind the renderbuffer to get a stencil buffer
     gl.bindRenderbuffer(gl.RENDERBUFFER, slice.buf);
-    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_STENCIL, 500, 500);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_STENCIL,
+                           resolution.x, resolution.y);
     gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_STENCIL_ATTACHMENT,
                                gl.RENDERBUFFER, slice.buf);
 
@@ -414,6 +423,8 @@ function renderSlice()
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.enable(gl.DEPTH_TEST);
     gl.disable(gl.STENCIL_TEST);
+
+    gl.viewport(0, 0, canvas.width, canvas.height);
 }
 
 module.exports = {'init': init, 'loadMesh': loadMesh};
