@@ -17,11 +17,40 @@ let quad = makeQuad();
 
 let scene = {"roll": 0, "pitch": 0};
 
+let slice = makeSlice();
+
+////////////////////////////////////////////////////////////////////////////////
+
+function makeSlice()
+{
+    let slice = {"buf": gl.createFramebuffer(),
+                 "tex": gl.createTexture()};
+
+    slice.prog = makeProgram(
+        glslify(__dirname + '/../shaders/slice.vert'),
+        glslify(__dirname + '/../shaders/slice.frag'),
+        ['model','bounds','frac'], ['v']);
+
+    gl.bindTexture(gl.TEXTURE_2D, slice.tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 500, 500, 0, gl.RGBA,
+                  gl.UNSIGNED_BYTE, null);
+
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+    gl.bindTexture(gl.TEXTURE_2D, null);
+
+    return slice;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 document.getElementById("slider").oninput = function(event)
 {
     quad.frac = event.target.valueAsNumber / 100.0;
+    renderSlice();
     draw();
 }
 
@@ -49,6 +78,7 @@ function mouseMoveListener(event)
             mesh.roll  += (mouse.pos.x - event.clientX) / 100.0;
             mesh.pitch += (mouse.pos.y - event.clientY) / 100.0;
             getMeshBounds();
+            renderSlice();
         }
         else
         {
@@ -108,22 +138,6 @@ function makeProgram(vert, frag, uniforms, attribs)
     return prog;
 }
 
-function makeMeshProgram()
-{
-    return makeProgram(
-        glslify(__dirname + '/../shaders/mesh.vert'),
-        glslify(__dirname + '/../shaders/mesh.frag'),
-        ['view', 'model'], ['v', 'n']);
-}
-
-function makeQuadProgram()
-{
-    return makeProgram(
-        glslify(__dirname + '/../shaders/quad.vert'),
-        glslify(__dirname + '/../shaders/quad.frag'),
-        ['view','tex','frac','bounds'], ['v']);
-}
-
 function init()
 {
     canvas.addEventListener("mousedown", mouseDownListener, false);
@@ -177,10 +191,11 @@ function drawQuad(quad)
 {
     gl.useProgram(quad.prog);
 
+    gl.disable(gl.DEPTH_TEST);
     gl.uniformMatrix4fv(quad.prog.uniform.view, false, viewMatrix());
 
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, quad.tex);
+    gl.bindTexture(gl.TEXTURE_2D, slice.tex);
     gl.uniform1i(quad.prog.uniform.tex, 0);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, quad.vert);
@@ -192,6 +207,7 @@ function drawQuad(quad)
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.enable(gl.DEPTH_TEST);
 }
 
 function draw()
@@ -201,7 +217,7 @@ function draw()
 
     if (mesh.loaded)
     {
-        drawMesh(mesh);
+        drawMesh(mesh, true);
         drawQuad(quad);
     }
 }
@@ -209,7 +225,11 @@ function draw()
 function makeQuad()
 {
     let quad = {};
-    quad.prog = makeQuadProgram();
+    quad.prog = makeProgram(
+        glslify(__dirname + '/../shaders/quad.vert'),
+        glslify(__dirname + '/../shaders/quad.frag'),
+        ['view','tex','frac','bounds'], ['v']);
+
     quad.vert = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, quad.vert);
     gl.bufferData(
@@ -219,18 +239,6 @@ function makeQuad()
                            1, -1,
                            1,  1]),
         gl.STATIC_DRAW);
-
-    quad.tex = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, quad.tex);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 2, 0, gl.RGBA, gl.UNSIGNED_BYTE,
-              new Uint8Array([255, 0, 255, 255, 0, 255, 255, 255]));
-
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-    gl.bindTexture(gl.TEXTURE_2D, null);
 
     quad.frac = 0.5;
     return quad;
@@ -266,7 +274,10 @@ function loadMesh(stl)
     mesh.pitch = 0;
 
     // Compile shader program for mesh
-    mesh.prog = makeMeshProgram();
+    mesh.prog = makeProgram(
+        glslify(__dirname + '/../shaders/mesh.vert'),
+        glslify(__dirname + '/../shaders/mesh.frag'),
+        ['view', 'model'], ['v', 'n']);
 
     // Store unique vertices
     mesh.verts = _.unique(stl.positions);
@@ -277,7 +288,7 @@ function loadMesh(stl)
     // Find bounds and center, then store them in matrix M
     getMeshBounds();
 
-    let scale = 1.5 / Math.sqrt(
+    let scale = 2 / Math.sqrt(
         Math.pow(mesh.bounds.zmax - mesh.bounds.zmin, 2) +
         Math.pow(mesh.bounds.ymax - mesh.bounds.ymin, 2) +
         Math.pow(mesh.bounds.xmax - mesh.bounds.xmin, 2));
@@ -334,7 +345,43 @@ function loadMesh(stl)
     getMeshBounds();
     mesh.loaded = true;
 
+    renderSlice();
     draw();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+function renderSlice()
+{
+    // Bind the target framebuffer
+    gl.bindFramebuffer(gl.FRAMEBUFFER, slice.buf);
+
+    // Attach our output texture
+    gl.framebufferTexture2D(
+        gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
+        gl.TEXTURE_2D, slice.tex, 0);
+
+    // Clear texture
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.useProgram(slice.prog);
+
+    // Load model matrix
+    gl.uniformMatrix4fv(slice.prog.uniform.model, false, modelMatrix());
+
+    // Load slice position and mesh bounds
+    gl.uniform1f(slice.prog.uniform.frac, quad.frac);
+    gl.uniform2f(slice.prog.uniform.bounds, mesh.bounds.zmin, mesh.bounds.zmax);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vert);
+    gl.enableVertexAttribArray(mesh.prog.attrib.v);
+    gl.vertexAttribPointer(mesh.prog.attrib.v, 3, gl.FLOAT, false, 0, 0);
+
+    gl.drawArrays(gl.TRIANGLES, 0, mesh.triangles);
+
+    // Restore the default framebuffer
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 }
 
 module.exports = {'init': init, 'loadMesh': loadMesh};
