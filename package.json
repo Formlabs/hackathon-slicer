@@ -21,7 +21,8 @@
   },
   "dependencies": {
     "gl-matrix": "^2.3.1",
-    "glslify": "^2.0.0"
+    "glslify": "^2.0.0",
+    "underscore": "^1.8.0"
   },
   "browserify": {
     "transform": [

@@ -1,7 +1,9 @@
 'use strict';
 
+
 ////////////////////////////////////////////////////////////////////////////////
 
+let _ = require('underscore');
 let glslify = require('glslify')
 let glm = require('gl-matrix');
 
@@ -102,7 +104,7 @@ function draw()
 function loadMesh(stl) {
     let buffer = gl.createBuffer();
 
-    var flattened = [].concat.apply([], stl.positions);
+    var flattened = _.flatten(stl.positions);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(
