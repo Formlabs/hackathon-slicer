@@ -6,7 +6,6 @@ module.exports = loadModel;
 
 function loadModel(STLasArrayBuffer) {
     let buf = new Buffer(STLasArrayBuffer);
-    let MESH = parseSTL(buf);
-    console.log(MESH);
-    viewPort.loadMesh(MESH);
+    let mesh = parseSTL(buf);
+    viewPort.loadMesh(mesh);
 }

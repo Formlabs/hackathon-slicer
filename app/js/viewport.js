@@ -9,14 +9,13 @@ let glm = require('gl-matrix');
 let canvas = document.getElementById("canvas");
 let gl = canvas.getContext("experimental-webgl");
 
-let mesh_prog = makeMeshProgram();
-
 let mouse = {};
 let roll = 0;
 let pitch = 0;
 
 // Model object
 let mesh = {"loaded": false};
+let quad = {};
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -58,6 +57,18 @@ function buildShader(txt, type)
     return s;
 }
 
+function setUniforms(prog, u)
+{
+    prog.uniform = {};
+    _.each(u, function(u){ prog.uniform[u] = gl.getUniformLocation(prog, u); });
+}
+
+function setAttribs(prog, a)
+{
+    prog.attrib = {};
+    _.each(a, function(a){ prog.attrib[a] = gl.getAttribLocation(prog, a); });
+}
+
 function makeMeshProgram()
 {
     let v = buildShader(
@@ -70,14 +81,15 @@ function makeMeshProgram()
     gl.attachShader(prog, f);
     gl.linkProgram(prog);
 
-    prog.uniform = {}
-    prog.uniform.view = gl.getUniformLocation(prog, "view");
-    prog.uniform.model = gl.getUniformLocation(prog, "model");
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS))
+    {
+        throw "Could not link program:" + gl.getProgramInfoLog(prog);
+    }
 
-    prog.attrib = {}
-    prog.attrib.vert = gl.getAttribLocation(prog, "v");
-    prog.attrib.norm = gl.getAttribLocation(prog, "n");
+    setUniforms(prog, ["view", "model"]);
+    setAttribs(prog, ["v", "n"]);
 
+    console.log(prog);
     return prog;
 }
 
@@ -107,18 +119,18 @@ function draw()
 
     if (mesh.loaded)
     {
-        gl.useProgram(mesh_prog);
+        gl.useProgram(mesh.prog);
 
-        gl.uniformMatrix4fv(mesh_prog.uniform.view, false, viewMatrix());
-        gl.uniformMatrix4fv(mesh_prog.uniform.model, false, mesh.M);
+        gl.uniformMatrix4fv(mesh.prog.uniform.view, false, viewMatrix());
+        gl.uniformMatrix4fv(mesh.prog.uniform.model, false, mesh.M);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, mesh.norm);
-        gl.enableVertexAttribArray(mesh_prog.attrib.norm);
-        gl.vertexAttribPointer(mesh_prog.attrib.norm, 3, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(mesh.prog.attrib.n);
+        gl.vertexAttribPointer(mesh.prog.attrib.n, 3, gl.FLOAT, false, 0, 0);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vert);
-        gl.enableVertexAttribArray(mesh_prog.attrib.vert);
-        gl.vertexAttribPointer(mesh_prog.attrib.vert, 3, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(mesh.prog.attrib.v);
+        gl.vertexAttribPointer(mesh.prog.attrib.v, 3, gl.FLOAT, false, 0, 0);
 
         gl.drawArrays(gl.TRIANGLES, 0, mesh.triangles);
     }
@@ -126,11 +138,22 @@ function draw()
 
 function makeQuad()
 {
-
+    quad.vert = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, quad.vert);
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([-1, -1,
+                          -1,  1,
+                           1, -1,
+                           1,  1]),
+        gl.STATIC_DRAW);
 }
 
 function loadMesh(stl)
 {
+    // Compile shader program for mesh
+    mesh.prog = makeMeshProgram();
+
     // Find bounds and center, then store them in matrix M
     let xyz = _.unzip(stl.positions);
 
