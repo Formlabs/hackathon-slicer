@@ -10,12 +10,20 @@ let canvas = document.getElementById("canvas");
 let gl = canvas.getContext("experimental-webgl");
 
 let mouse = {};
-let roll = 0;
-let pitch = 0;
 
 // Model object
-let mesh = {"loaded": false};
+let mesh = {"loaded": false, "roll": 0, "pitch": 0};
 let quad = makeQuad();
+
+let scene = {"roll": 0, "pitch": 0};
+
+////////////////////////////////////////////////////////////////////////////////
+
+document.getElementById("slider").oninput = function(event)
+{
+    quad.frac = event.target.valueAsNumber / 100.0;
+    draw();
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -24,6 +32,7 @@ function mouseDownListener(event)
     mouse.down = true;
     mouse.pos = {"x": event.clientX,
                  "y": event.clientY};
+    mouse.shift = event.shiftKey;
 }
 
 function mouseUpListener(event)
@@ -35,8 +44,17 @@ function mouseMoveListener(event)
 {
     if (mouse.down)
     {
-        roll  += (mouse.pos.x - event.clientX) / 100.0;
-        pitch += (mouse.pos.y - event.clientY) / 100.0;
+        if (mouse.shift)
+        {
+            mesh.roll  += (mouse.pos.x - event.clientX) / 100.0;
+            mesh.pitch += (mouse.pos.y - event.clientY) / 100.0;
+            getMeshBounds();
+        }
+        else
+        {
+            scene.roll  += (mouse.pos.x - event.clientX) / 100.0;
+            scene.pitch += (mouse.pos.y - event.clientY) / 100.0;
+        }
 
         mouse.pos = {"x": event.clientX,
                      "y": event.clientY};
@@ -87,7 +105,6 @@ function makeProgram(vert, frag, uniforms, attribs)
     setUniforms(prog, uniforms);
     setAttribs(prog, attribs);
 
-    console.log(prog);
     return prog;
 }
 
@@ -104,7 +121,7 @@ function makeQuadProgram()
     return makeProgram(
         glslify(__dirname + '/../shaders/quad.vert'),
         glslify(__dirname + '/../shaders/quad.frag'),
-        ['view','tex'], ['v']);
+        ['view','tex','frac','bounds'], ['v']);
 }
 
 function init()
@@ -119,12 +136,23 @@ function init()
 
 function viewMatrix()
 {
-    let view = glm.mat4.create();
-    glm.mat4.rotateY(view, view, roll);
-    glm.mat4.rotateX(view, view, pitch);
-    glm.mat4.scale(view, view, [0.5, 0.5, 0.5]);
+    let v = glm.mat4.create();
+    glm.mat4.rotateX(v, v, scene.pitch);
+    glm.mat4.rotateZ(v, v, scene.roll);
+    glm.mat4.scale(v, v, [0.5, 0.5, 0.5]);
 
-    return view;
+    return v;
+}
+
+function modelMatrix()
+{
+    let m = glm.mat4.create();
+    glm.mat4.rotateZ(m, m, mesh.roll);
+    glm.mat4.rotateX(m, m, mesh.pitch);
+
+    let out = glm.mat4.create();
+    glm.mat4.mul(out, m, mesh.M);
+    return out;
 }
 
 function drawMesh(mesh)
@@ -132,7 +160,7 @@ function drawMesh(mesh)
     gl.useProgram(mesh.prog);
 
     gl.uniformMatrix4fv(mesh.prog.uniform.view, false, viewMatrix());
-    gl.uniformMatrix4fv(mesh.prog.uniform.model, false, mesh.M);
+    gl.uniformMatrix4fv(mesh.prog.uniform.model, false, modelMatrix());
 
     gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vert);
     gl.enableVertexAttribArray(mesh.prog.attrib.v);
@@ -158,6 +186,9 @@ function drawQuad(quad)
     gl.bindBuffer(gl.ARRAY_BUFFER, quad.vert);
     gl.enableVertexAttribArray(quad.prog.attrib.v);
     gl.vertexAttribPointer(quad.prog.attrib.v, 2, gl.FLOAT, false, 0, 0);
+
+    gl.uniform1f(quad.prog.uniform.frac, quad.frac);
+    gl.uniform2f(quad.prog.uniform.bounds, mesh.bounds.zmin, mesh.bounds.zmax);
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.bindTexture(gl.TEXTURE_2D, null);
@@ -201,34 +232,63 @@ function makeQuad()
 
     gl.bindTexture(gl.TEXTURE_2D, null);
 
+    quad.frac = 0.5;
     return quad;
+}
+
+function getMeshBounds()
+{
+    let M = modelMatrix();
+
+    let vs = _.map(mesh.verts, function(v){
+        let out = glm.vec3.create();
+        glm.mat4.mul(out, M, [v[0], v[1], v[2], 1]);
+        return out;});
+
+    // Find bounds and center, then store them in matrix M
+    let xyz = _.unzip(vs);
+
+    mesh.bounds = {};
+    mesh.bounds.xmin = _.min(xyz[0]);
+    mesh.bounds.xmax = _.max(xyz[0]);
+
+    mesh.bounds.ymin = _.min(xyz[1]);
+    mesh.bounds.ymax = _.max(xyz[1]);
+
+    mesh.bounds.zmin = _.min(xyz[2]);
+    mesh.bounds.zmax = _.max(xyz[2]);
 }
 
 function loadMesh(stl)
 {
+    // Reset pitch and roll
+    mesh.roll = 0;
+    mesh.pitch = 0;
+
     // Compile shader program for mesh
     mesh.prog = makeMeshProgram();
 
+    // Store unique vertices
+    mesh.verts = _.unique(stl.positions);
+
+    // Create identity transform matrix
+    mesh.M = glm.mat4.create();
+
     // Find bounds and center, then store them in matrix M
-    let xyz = _.unzip(stl.positions);
+    getMeshBounds();
 
-    let xmin = _.min(xyz[0]);
-    let xmax = _.max(xyz[0]);
-
-    let ymin = _.min(xyz[1]);
-    let ymax = _.max(xyz[1]);
-
-    let zmin = _.min(xyz[2]);
-    let zmax = _.max(xyz[2]);
-
-    let scale = 1.5 / _.max([zmax - zmin, ymax - ymin, xmax - xmin]);
+    let scale = 1.5 / Math.sqrt(
+        Math.pow(mesh.bounds.zmax - mesh.bounds.zmin, 2) +
+        Math.pow(mesh.bounds.ymax - mesh.bounds.ymin, 2) +
+        Math.pow(mesh.bounds.xmax - mesh.bounds.xmin, 2));
 
     // Store mesh transform matrix
     mesh.M = glm.mat4.create();
     glm.mat4.scale(mesh.M, mesh.M, [scale, scale, scale]);
-    glm.mat4.translate(mesh.M, mesh.M, [-(xmin + xmax) / 2,
-                                        -(ymin + ymax) / 2,
-                                        -(zmin + zmax) / 2]);
+    glm.mat4.translate(mesh.M, mesh.M, [
+        -(mesh.bounds.xmin + mesh.bounds.xmax) / 2,
+        -(mesh.bounds.ymin + mesh.bounds.ymax) / 2,
+        -(mesh.bounds.zmin + mesh.bounds.zmax) / 2]);
 
     // Load vertex positions into a buffer
     let flattened = _.flatten(stl.positions);
@@ -270,6 +330,8 @@ function loadMesh(stl)
     // Store the number of triangles
     mesh.triangles = stl.positions.length;
 
+    // Get bounds with new transform matrix applied
+    getMeshBounds();
     mesh.loaded = true;
 
     draw();
