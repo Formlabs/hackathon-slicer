@@ -120,7 +120,7 @@ function loadMesh(stl) {
     let zmin = _.min(xyz[2]);
     let zmax = _.max(xyz[2]);
 
-    let scale = 1 / _.max([zmax - zmin, ymax - ymin, xmax - xmin]);
+    let scale = 1.5 / _.max([zmax - zmin, ymax - ymin, xmax - xmin]);
     M = glm.mat4.create();
     glm.mat4.scale(M, M, glm.vec3.fromValues(scale, scale, scale));
     glm.mat4.translate(M, M, glm.vec3.fromValues(-(xmin + xmax) / 2,
