@@ -15,7 +15,7 @@ let pitch = 0;
 
 // Model object
 let mesh = {"loaded": false};
-let quad = {};
+let quad = makeQuad();
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -69,12 +69,10 @@ function setAttribs(prog, a)
     _.each(a, function(a){ prog.attrib[a] = gl.getAttribLocation(prog, a); });
 }
 
-function makeMeshProgram()
+function makeProgram(vert, frag, uniforms, attribs)
 {
-    let v = buildShader(
-        glslify(__dirname + '/../shaders/mesh.vert'), gl.VERTEX_SHADER);
-    let f = buildShader(
-        glslify(__dirname + '/../shaders/mesh.frag'), gl.FRAGMENT_SHADER);
+    let v = buildShader(vert, gl.VERTEX_SHADER);
+    let f = buildShader(frag, gl.FRAGMENT_SHADER);
 
     let prog = gl.createProgram();
     gl.attachShader(prog, v);
@@ -86,11 +84,27 @@ function makeMeshProgram()
         throw "Could not link program:" + gl.getProgramInfoLog(prog);
     }
 
-    setUniforms(prog, ["view", "model"]);
-    setAttribs(prog, ["v", "n"]);
+    setUniforms(prog, uniforms);
+    setAttribs(prog, attribs);
 
     console.log(prog);
     return prog;
+}
+
+function makeMeshProgram()
+{
+    return makeProgram(
+        glslify(__dirname + '/../shaders/mesh.vert'),
+        glslify(__dirname + '/../shaders/mesh.frag'),
+        ['view', 'model'], ['v', 'n']);
+}
+
+function makeQuadProgram()
+{
+    return makeProgram(
+        glslify(__dirname + '/../shaders/quad.vert'),
+        glslify(__dirname + '/../shaders/quad.frag'),
+        ['view','tex'], ['v']);
 }
 
 function init()
@@ -108,8 +122,45 @@ function viewMatrix()
     let view = glm.mat4.create();
     glm.mat4.rotateY(view, view, roll);
     glm.mat4.rotateX(view, view, pitch);
+    glm.mat4.scale(view, view, [0.5, 0.5, 0.5]);
 
     return view;
+}
+
+function drawMesh(mesh)
+{
+    gl.useProgram(mesh.prog);
+
+    gl.uniformMatrix4fv(mesh.prog.uniform.view, false, viewMatrix());
+    gl.uniformMatrix4fv(mesh.prog.uniform.model, false, mesh.M);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vert);
+    gl.enableVertexAttribArray(mesh.prog.attrib.v);
+    gl.vertexAttribPointer(mesh.prog.attrib.v, 3, gl.FLOAT, false, 0, 0);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, mesh.norm);
+    gl.enableVertexAttribArray(mesh.prog.attrib.n);
+    gl.vertexAttribPointer(mesh.prog.attrib.n, 3, gl.FLOAT, false, 0, 0);
+
+    gl.drawArrays(gl.TRIANGLES, 0, mesh.triangles);
+}
+
+function drawQuad(quad)
+{
+    gl.useProgram(quad.prog);
+
+    gl.uniformMatrix4fv(quad.prog.uniform.view, false, viewMatrix());
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, quad.tex);
+    gl.uniform1i(quad.prog.uniform.tex, 0);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, quad.vert);
+    gl.enableVertexAttribArray(quad.prog.attrib.v);
+    gl.vertexAttribPointer(quad.prog.attrib.v, 2, gl.FLOAT, false, 0, 0);
+
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.bindTexture(gl.TEXTURE_2D, null);
 }
 
 function draw()
@@ -119,25 +170,15 @@ function draw()
 
     if (mesh.loaded)
     {
-        gl.useProgram(mesh.prog);
-
-        gl.uniformMatrix4fv(mesh.prog.uniform.view, false, viewMatrix());
-        gl.uniformMatrix4fv(mesh.prog.uniform.model, false, mesh.M);
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, mesh.norm);
-        gl.enableVertexAttribArray(mesh.prog.attrib.n);
-        gl.vertexAttribPointer(mesh.prog.attrib.n, 3, gl.FLOAT, false, 0, 0);
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vert);
-        gl.enableVertexAttribArray(mesh.prog.attrib.v);
-        gl.vertexAttribPointer(mesh.prog.attrib.v, 3, gl.FLOAT, false, 0, 0);
-
-        gl.drawArrays(gl.TRIANGLES, 0, mesh.triangles);
+        drawMesh(mesh);
+        drawQuad(quad);
     }
 }
 
 function makeQuad()
 {
+    let quad = {};
+    quad.prog = makeQuadProgram();
     quad.vert = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, quad.vert);
     gl.bufferData(
@@ -147,6 +188,20 @@ function makeQuad()
                            1, -1,
                            1,  1]),
         gl.STATIC_DRAW);
+
+    quad.tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, quad.tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 2, 0, gl.RGBA, gl.UNSIGNED_BYTE,
+              new Uint8Array([255, 0, 255, 255, 0, 255, 255, 255]));
+
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+    gl.bindTexture(gl.TEXTURE_2D, null);
+
+    return quad;
 }
 
 function loadMesh(stl)
@@ -170,10 +225,10 @@ function loadMesh(stl)
 
     // Store mesh transform matrix
     mesh.M = glm.mat4.create();
-    glm.mat4.scale(mesh.M, mesh.M, glm.vec3.fromValues(scale, scale, scale));
-    glm.mat4.translate(mesh.M, mesh.M, glm.vec3.fromValues(-(xmin + xmax) / 2,
-                                                           -(ymin + ymax) / 2,
-                                                           -(zmin + zmax) / 2));
+    glm.mat4.scale(mesh.M, mesh.M, [scale, scale, scale]);
+    glm.mat4.translate(mesh.M, mesh.M, [-(xmin + xmax) / 2,
+                                        -(ymin + ymax) / 2,
+                                        -(zmin + zmax) / 2]);
 
     // Load vertex positions into a buffer
     let flattened = _.flatten(stl.positions);
