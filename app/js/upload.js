@@ -1,15 +1,17 @@
 'use strict';
-var slicing = require('./slice.js');
+let loadModel = require('./loadModel.js');
 
 document.getElementById("upload").onchange = function(evt) {
     let fileInput = document.getElementById("upload");
     let file = fileInput.files[0];
 
+    console.log(file);
+
     let reader = new FileReader();
 
-    reader.onload = function(evt) {
+    reader.onload = function() {
         let STL = reader.result;
-        slice(STL);
+        loadModel(STL);
     }
     reader.readAsArrayBuffer(file);
 }

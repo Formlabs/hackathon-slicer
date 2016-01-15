@@ -2,7 +2,6 @@
 
 var glslify = require('glslify')
 var upload  = require('./upload.js');
-var slicing = require('./slice.js');
 
 var canvas = document.getElementById("canvas");
 var gl = canvas.getContext("experimental-webgl");
