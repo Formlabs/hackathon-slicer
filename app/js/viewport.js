@@ -203,7 +203,14 @@ function drawBase(base)
     gl.cullFace(gl.FRONT);
     gl.useProgram(base.prog);
     gl.uniformMatrix4fv(base.prog.uniform.view, false, viewMatrix());
-    gl.uniform1f(base.prog.uniform.zmin, mesh.bounds.zmin);
+    if (mesh.loaded)
+    {
+        gl.uniform1f(base.prog.uniform.zmin, mesh.bounds.zmin);
+    }
+    else
+    {
+        gl.uniform1f(base.prog.uniform.zmin, 0);
+    }
     gl.uniform1f(base.prog.uniform.aspect, printer.aspectRatio());
 
     gl.enable(gl.BLEND);
@@ -250,11 +257,12 @@ function draw()
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
+    drawBase(base);
+
     if (mesh.loaded)
     {
         drawMesh(mesh, true);
         drawQuad(quad);
-        drawBase(base);
     }
 }
 
