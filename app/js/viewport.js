@@ -321,6 +321,9 @@ function getMeshBounds()
 
 function loadMesh(stl)
 {
+    // Clear the status field
+    setStatus("");
+
     // Reset pitch and roll
     mesh.roll = 0;
     mesh.pitch = 0;
@@ -493,8 +496,20 @@ function getBounds()
     return mesh.bounds;
 }
 
+function hasModel()
+{
+    return mesh.loaded;
+}
+
+function setStatus(txt)
+{
+    document.getElementById("status").innerHTML = txt;
+}
+
 module.exports = {'init': init,
                   'loadMesh': loadMesh,
                   'getSliceAt': getSliceAt,
                   'resolution': resolution,
-                  'getBounds': getBounds};
+                  'getBounds': getBounds,
+                  'hasModel': hasModel,
+                  'setStatus': setStatus};

@@ -9,9 +9,13 @@
     <div id="caption">Don't Lase Me, Bro Slicer 0.0.0.1</div>
     <div class="section group">
         <div class="col span_1_of_3">
-            <input accept=".stl" type="file" id="upload" size="50"><br>
-            Layer height (microns): <input type="text" id="height" value="100">
-            <input type="submit" id="slice" value="Slice">
+            <div id="controls">
+                <p><input accept=".stl" type="file" id="upload" size="50"></p>
+                <p>Layer height (μm): <input type="text" id="height" value="100"
+                                       size="3"></p>
+                <p><input type="submit" id="slice" value="Slice" style="width:180px;"></p>
+                <p id="status"></p>
+            </div>
         </div>
         <div class="col span_2_of_3">
                 <canvas id="canvas" width="500" height="500">

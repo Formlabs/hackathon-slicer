@@ -20,7 +20,7 @@ function next(i, n)
 {
     if (i < n)
     {
-        let data = viewport.getSliceAt(i / 100);
+        let data = viewport.getSliceAt(i / n);
 
         // Copy the pixels to a 2D canvas
         let image = context.createImageData(
@@ -38,17 +38,29 @@ function next(i, n)
                     png.slice(png.indexOf(',') + 1, -1),
                     {base64: true});
 
+        if (i == n - 1)
+        {
+            viewport.setStatus("Saving .zip file...");
+        }
         requestAnimationFrame(function() { next(i + 1, n); });
     }
     else
     {
         let content = zip.generate({type: 'blob'});
         fs.saveAs(content, "slices.zip");
+        viewport.setStatus("");
     }
 }
 
 // Assign callback to the "slices" button
-document.getElementById("slice").onclick = function(event) {
+document.getElementById("slice").onclick = function(event)
+{
+    if (!viewport.hasModel())
+    {
+        viewport.setStatus("No model loaded!");
+        return;
+    }
+
     let microns = document.getElementById("height").value;
     let bounds = viewport.getBounds();
 
@@ -58,6 +70,7 @@ document.getElementById("slice").onclick = function(event) {
     let count = Math.floor(zrange_um / microns);
 
     zip = new JSZip();
+    viewport.setStatus("Slicing...");
     slices = zip.folder("slices");
     next(0, count);
 }
