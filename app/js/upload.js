@@ -17,6 +17,9 @@ document.getElementById("upload").onchange = function(event) {
     reader.onload = function() {
         let buf = new Buffer(reader.result);
         let mesh = parseSTL(buf);
+
+        document.getElementById("filename").value = file.name.slice(0, -4);
+
         viewport.loadMesh(mesh);
 
         ui.setStatus("");

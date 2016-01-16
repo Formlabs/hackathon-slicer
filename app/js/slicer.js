@@ -49,7 +49,8 @@ function next(i, n)
     else
     {
         let content = zip.generate({type: 'blob', compression: 'DEFLATE'});
-        fs.saveAs(content, "slices.zip");
+        let zipName = document.getElementById("filename").value
+        fs.saveAs(content, zipName);
         ui.setStatus("");
         ui.enableButtons();
     }
