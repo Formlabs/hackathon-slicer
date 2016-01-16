@@ -50,6 +50,7 @@ function next(i, n)
         fs.saveAs(content, "slices.zip");
         viewport.setStatus("");
         document.getElementById("slice").disabled = false;
+        document.getElementById("upload").disabled = false;
     }
 }
 
@@ -63,6 +64,7 @@ document.getElementById("slice").onclick = function(event)
     }
 
     event.target.disabled = true;
+    document.getElementById("upload").disabled = true;
 
     let microns = document.getElementById("height").value;
     let bounds = viewport.getBounds();
