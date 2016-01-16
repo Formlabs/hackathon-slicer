@@ -32,7 +32,10 @@ function next(i, n)
 
         // Convert data to a DataURL and save to the zip file
         let png = canvas.toDataURL();
-        slices.file("out" + i + ".png", png.slice(png.indexOf(',') + 1, -1),
+        let index = i + "";
+        while (index.length < 4) index = "0" + index;
+        slices.file("out" + index + ".png",
+                    png.slice(png.indexOf(',') + 1, -1),
                     {base64: true});
 
         requestAnimationFrame(function() { next(i + 1, n); });
