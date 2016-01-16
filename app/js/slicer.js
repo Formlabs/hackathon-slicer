@@ -49,8 +49,7 @@ function next(i, n)
         let content = zip.generate({type: 'blob'});
         fs.saveAs(content, "slices.zip");
         viewport.setStatus("");
-        document.getElementById("slice").disabled = false;
-        document.getElementById("upload").disabled = false;
+        viewport.enableButtons();
     }
 }
 
@@ -63,8 +62,7 @@ document.getElementById("slice").onclick = function(event)
         return;
     }
 
-    event.target.disabled = true;
-    document.getElementById("upload").disabled = true;
+    viewport.disableButtons();
 
     let microns = document.getElementById("height").value;
     let bounds = viewport.getBounds();

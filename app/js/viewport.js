@@ -506,10 +506,24 @@ function setStatus(txt)
     document.getElementById("status").innerHTML = txt;
 }
 
+function disableButtons()
+{
+    document.getElementById("slice").disabled = true;
+    document.getElementById("upload").disabled = true;
+}
+
+function enableButtons()
+{
+    document.getElementById("slice").disabled = false;
+    document.getElementById("upload").disabled = false;
+}
+
 module.exports = {'init': init,
                   'loadMesh': loadMesh,
                   'getSliceAt': getSliceAt,
                   'resolution': resolution,
                   'getBounds': getBounds,
                   'hasModel': hasModel,
-                  'setStatus': setStatus};
+                  'setStatus': setStatus,
+                  'enableButtons': enableButtons,
+                  'disableButtons': disableButtons};
