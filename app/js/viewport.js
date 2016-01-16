@@ -488,7 +488,13 @@ function getSliceAt(frac)
     return renderSlice();
 }
 
+function getBounds()
+{
+    return mesh.bounds;
+}
+
 module.exports = {'init': init,
                   'loadMesh': loadMesh,
                   'getSliceAt': getSliceAt,
-                  'resolution': resolution};
+                  'resolution': resolution,
+                  'getBounds': getBounds};
