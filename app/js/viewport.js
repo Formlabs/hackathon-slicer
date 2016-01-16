@@ -162,7 +162,7 @@ function viewMatrix()
     glm.mat4.scale(v, v, [1, 1, 0.5]);
     glm.mat4.rotateX(v, v, scene.pitch);
     glm.mat4.rotateZ(v, v, scene.roll);
-    glm.mat4.scale(v, v, [0.75, 0.75, -0.75]);
+    glm.mat4.scale(v, v, [0.5, 0.5, -0.5]);
 
     return v;
 }
@@ -199,9 +199,12 @@ function drawMesh(mesh)
 
 function drawBase(base)
 {
+    gl.enable(gl.CULL_FACE);
+    gl.cullFace(gl.FRONT);
     gl.useProgram(base.prog);
     gl.uniformMatrix4fv(base.prog.uniform.view, false, viewMatrix());
     gl.uniform1f(base.prog.uniform.zmin, mesh.bounds.zmin);
+    gl.uniform1f(base.prog.uniform.aspect, printer.aspectRatio());
 
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -212,6 +215,7 @@ function drawBase(base)
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.disable(gl.CULL_FACE);
 }
 
 function drawQuad(quad)
@@ -282,7 +286,7 @@ function makeBase()
     base.prog = makeProgram(
         glslify(__dirname + '/../shaders/base.vert'),
         glslify(__dirname + '/../shaders/base.frag'),
-        ['view', 'zmin'], ['v']);
+        ['view', 'zmin', 'aspect'], ['v']);
 
     base.vert = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, base.vert);
