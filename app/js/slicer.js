@@ -49,6 +49,7 @@ function next(i, n)
         let content = zip.generate({type: 'blob'});
         fs.saveAs(content, "slices.zip");
         viewport.setStatus("");
+        document.getElementById("slice").disabled = false;
     }
 }
 
@@ -60,6 +61,8 @@ document.getElementById("slice").onclick = function(event)
         viewport.setStatus("No model loaded!");
         return;
     }
+
+    event.target.disabled = true;
 
     let microns = document.getElementById("height").value;
     let bounds = viewport.getBounds();

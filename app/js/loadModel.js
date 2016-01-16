@@ -1,11 +1,13 @@
 'use strict';
 let parseSTL = require('parse-stl');
-let viewPort = require('./viewport.js');
+let viewport = require('./viewport.js');
 
 module.exports = loadModel;
 
 function loadModel(STLasArrayBuffer) {
+    viewport.setStatus("Loading...");
     let buf = new Buffer(STLasArrayBuffer);
     let mesh = parseSTL(buf);
-    viewPort.loadMesh(mesh);
+    viewport.loadMesh(mesh);
+    viewport.setStatus("");
 }
