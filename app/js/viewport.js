@@ -6,12 +6,13 @@ let glm = require('gl-matrix');
 
 ////////////////////////////////////////////////////////////////////////////////
 
-let resolution = {"x": 1280, "y": 800};
-
-////////////////////////////////////////////////////////////////////////////////
+let ui = require('./ui.js');
+let printer = require('./printer.js');
 
 let canvas = document.getElementById("canvas");
 let gl = canvas.getContext("experimental-webgl");
+
+////////////////////////////////////////////////////////////////////////////////
 
 let mouse = {};
 
@@ -38,7 +39,8 @@ function makeSlice()
         ['model','bounds','frac','aspect'], ['v']);
 
     gl.bindTexture(gl.TEXTURE_2D, slice.tex);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, resolution.x, resolution.y,
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
+                  printer.resolution.x, printer.resolution.y,
                   0, gl.RGBA, gl.UNSIGNED_BYTE, null);
 
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -231,8 +233,7 @@ function drawQuad(quad)
     gl.vertexAttribPointer(quad.prog.attrib.v, 2, gl.FLOAT, false, 0, 0);
 
     gl.uniform1f(quad.prog.uniform.frac, quad.frac);
-    gl.uniform1f(quad.prog.uniform.aspect,
-            resolution.x / resolution.y);
+    gl.uniform1f(quad.prog.uniform.aspect, printer.aspectRatio());
     gl.uniform2f(quad.prog.uniform.bounds, mesh.bounds.zmin, mesh.bounds.zmax);
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -323,7 +324,7 @@ function getMeshBounds()
 function loadMesh(stl)
 {
     // Clear the status field
-    setStatus("");
+    ui.setStatus("");
 
     // Reset pitch and roll
     mesh.roll = 0;
@@ -413,7 +414,7 @@ function renderSlice()
     // We won't be using the depth test in this rendering pass
     gl.disable(gl.DEPTH_TEST);
     gl.enable(gl.STENCIL_TEST);
-    gl.viewport(0, 0, resolution.x, resolution.y);
+    gl.viewport(0, 0, printer.resolution.x, printer.resolution.y);
 
     // Bind the target framebuffer
     gl.bindFramebuffer(gl.FRAMEBUFFER, slice.fbo);
@@ -426,7 +427,7 @@ function renderSlice()
     // Bind the renderbuffer to get a stencil buffer
     gl.bindRenderbuffer(gl.RENDERBUFFER, slice.buf);
     gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_STENCIL,
-                           resolution.x, resolution.y);
+                           printer.resolution.x, printer.resolution.y);
     gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_STENCIL_ATTACHMENT,
                                gl.RENDERBUFFER, slice.buf);
 
@@ -442,8 +443,7 @@ function renderSlice()
 
     // Load slice position and mesh bounds
     gl.uniform1f(slice.prog.uniform.frac, quad.frac);
-    gl.uniform1f(slice.prog.uniform.aspect,
-            resolution.x / resolution.y);
+    gl.uniform1f(slice.prog.uniform.aspect, printer.aspectRatio());
     gl.uniform2f(slice.prog.uniform.bounds, mesh.bounds.zmin, mesh.bounds.zmax);
 
     // Load mesh vertices
@@ -471,8 +471,8 @@ function renderSlice()
     gl.drawArrays(gl.TRIANGLES, 0, mesh.triangles);
 
     // Load the data from the framebuffer
-    let data = new Uint8Array(resolution.x * resolution.y * 4);
-    gl.readPixels(0, 0, resolution.x, resolution.y, gl.RGBA,
+    let data = new Uint8Array(printer.pixels() * 4);
+    gl.readPixels(0, 0, printer.resolution.x, printer.resolution.y, gl.RGBA,
                   gl.UNSIGNED_BYTE, data);
 
     // Restore the default framebuffer
@@ -501,25 +501,6 @@ function getBounds()
 function hasModel()
 {
     return mesh.loaded;
-}
-
-function setStatus(txt)
-{
-    document.getElementById("status").innerHTML = txt;
-}
-
-function disableButtons()
-{
-    document.getElementById("slice").disabled = true;
-    document.getElementById("upload").disabled = true;
-    document.getElementById("rot_reset").disabled = true;
-}
-
-function enableButtons()
-{
-    document.getElementById("slice").disabled = false;
-    document.getElementById("upload").disabled = false;
-    document.getElementById("rot_reset").disabled = false;
 }
 
 document.getElementById("rot_reset").onclick = function(event) {
@@ -581,9 +562,5 @@ document.getElementById("rot_z_minus").onclick = function(event) {
 module.exports = {'init': init,
                   'loadMesh': loadMesh,
                   'getSliceAt': getSliceAt,
-                  'resolution': resolution,
                   'getBounds': getBounds,
-                  'hasModel': hasModel,
-                  'setStatus': setStatus,
-                  'enableButtons': enableButtons,
-                  'disableButtons': disableButtons};
+                  'hasModel': hasModel};

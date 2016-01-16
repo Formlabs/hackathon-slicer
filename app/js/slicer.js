@@ -4,13 +4,15 @@ let fs = require('filesaver.js');
 let JSZip = require('JSZip');
 
 let viewport = require('./viewport.js');
+let printer = require('./printer.js');
+let ui = require('./ui.js');
 
 ////////////////////////////////////////////////////////////////////////////////
 
 // Create a 2D canvas to store our rendered image
 let canvas = document.createElement('canvas');
-canvas.width = viewport.resolution.x;
-canvas.height = viewport.resolution.y;
+canvas.width = printer.resolution.x;
+canvas.height = printer.resolution.y;
 let context = canvas.getContext('2d');
 
 let zip = null;
@@ -24,7 +26,7 @@ function next(i, n)
 
         // Copy the pixels to a 2D canvas
         let image = context.createImageData(
-                viewport.resolution.x, viewport.resolution.y);
+                printer.resolution.x, printer.resolution.y);
         image.data.set(data);
 
         // Load data into the context
@@ -40,7 +42,7 @@ function next(i, n)
 
         if (i == n - 1)
         {
-            viewport.setStatus("Saving .zip file...");
+            ui.setStatus("Saving .zip file...");
         }
         requestAnimationFrame(function() { next(i + 1, n); });
     }
@@ -48,8 +50,8 @@ function next(i, n)
     {
         let content = zip.generate({type: 'blob'});
         fs.saveAs(content, "slices.zip");
-        viewport.setStatus("");
-        viewport.enableButtons();
+        ui.setStatus("");
+        ui.enableButtons();
     }
 }
 
@@ -58,11 +60,11 @@ document.getElementById("slice").onclick = function(event)
 {
     if (!viewport.hasModel())
     {
-        viewport.setStatus("No model loaded!");
+        ui.setStatus("No model loaded!");
         return;
     }
 
-    viewport.disableButtons();
+    ui.disableButtons();
 
     let microns = document.getElementById("height").value;
     let bounds = viewport.getBounds();
@@ -73,7 +75,7 @@ document.getElementById("slice").onclick = function(event)
     let count = Math.floor(zrange_um / microns);
 
     zip = new JSZip();
-    viewport.setStatus("Slicing...");
+    ui.setStatus("Slicing...");
     slices = zip.folder("slices");
     next(0, count);
 }
