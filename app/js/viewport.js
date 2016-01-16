@@ -330,7 +330,7 @@ function loadMesh(stl)
         ['view', 'model'], ['v', 'n']);
 
     // Store unique vertices
-    mesh.verts = _.unique(stl.positions);
+    mesh.verts = stl.positions;
 
     // Create identity transform matrix
     mesh.M = glm.mat4.create();
