@@ -65,11 +65,12 @@ document.getElementById("slice").onclick = function(event)
     viewport.disableButtons();
 
     let microns = document.getElementById("height").value;
+    let target_Z = document.getElementById("zscale").value;
     let bounds = viewport.getBounds();
 
     // We map 3 inches to +/-1 on the X axis, so we use that ratio
     // to convert to Z in inches
-    let zrange_um = (bounds.zmax - bounds.zmin) * (3 * 25.4e3) / 2.;
+    let zrange_um = (bounds.zmax - bounds.zmin) * (target_Z * 1e4) / 2.;
     let count = Math.floor(zrange_um / microns);
 
     zip = new JSZip();
