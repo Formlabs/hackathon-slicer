@@ -13,6 +13,13 @@ function pixels()
     return resolution.x * resolution.y;
 }
 
+// Returns a scale ratio of OpenGL units per mm
+function getGLscale()
+{
+    return 2 * aspectRatio() / width_mm;
+}
+
 module.exports = {'resolution': resolution,
                   'aspectRatio': aspectRatio,
-                  'pixels': pixels};
+                  'pixels': pixels,
+                  'getGLscale': getGLscale};

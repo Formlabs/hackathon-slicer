@@ -350,10 +350,7 @@ function loadMesh(stl)
     // Find bounds and center, then store them in matrix M
     getMeshBounds();
 
-    let scale = 2 / Math.sqrt(
-        Math.pow(mesh.bounds.zmax - mesh.bounds.zmin, 2) +
-        Math.pow(mesh.bounds.ymax - mesh.bounds.ymin, 2) +
-        Math.pow(mesh.bounds.xmax - mesh.bounds.xmin, 2));
+    let scale = ui.getStlScale() * printer.getGLscale();
 
     // Store mesh transform matrix
     mesh.M = glm.mat4.create();

@@ -1,8 +1,5 @@
 'use strict';
 
-let canvas = document.getElementById("canvas");
-let gl = canvas.getContext("experimental-webgl");
-
 function disableButtons()
 {
     document.getElementById("slice").disabled = true;
@@ -22,6 +19,13 @@ function setStatus(txt)
     document.getElementById("status").innerHTML = txt;
 }
 
+// Returns the scale ratio mm per stl unit
+function getStlScale()
+{
+    return document.getElementById("mm").value;
+}
+
 module.exports = {'disableButtons': disableButtons,
                   'enableButtons': enableButtons,
-                  'setStatus': setStatus};
+                  'setStatus': setStatus,
+                  'getStlScale': getStlScale};
