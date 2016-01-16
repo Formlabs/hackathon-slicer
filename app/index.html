@@ -10,11 +10,30 @@
     <div class="section group">
         <div class="col span_1_of_3">
             <div id="controls">
-                <p><input accept=".stl" type="file" id="upload" size="50"></p>
+                <p><input accept=".stl" type="file" id="upload" size="50"/></p>
                 <p>Layer height (μm): <input type="text" id="height" value="100"
-                                       size="3"></p>
-                <p><input type="submit" id="slice" value="Slice" style="width:180px;"></p>
+                                       size="3"/></p>
+                <p><input type="submit" id="slice" value="Slice" style="width:180px;"/></p>
                 <p id="status"></p>
+
+                <div id="rotation">
+                    <p>Rotation:</p>
+                    <p><input type="submit" id="rot_reset" value="Reset"/></p>
+                    <div>
+                        <input type="submit" id="rot_x_plus" value="X+"/>
+                        <input type="submit" id="rot_x_minus" value="X-"/>
+                    </div>
+                    <div>
+                        <input type="submit" id="rot_y_plus" value="Y+"/>
+                        <input type="submit" id="rot_y_minus" value="Y-"/>
+                    </div>
+                    <div>
+                        <input type="submit" id="rot_z_plus" value="Z+"/>
+                        <input type="submit" id="rot_z_minus" value="Z-"/>
+                    </div>
+
+                </div>
+
             </div>
         </div>
         <div class="col span_2_of_3">

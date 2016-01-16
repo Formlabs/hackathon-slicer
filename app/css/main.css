@@ -12,6 +12,10 @@ body {
     padding-bottom:20px;
 }
 
+#rotation {
+    margin-top:50px;
+}
+
 #controls {
     margin-top:50px;
     margin-left:25px;

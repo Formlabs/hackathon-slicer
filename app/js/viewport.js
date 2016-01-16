@@ -170,6 +170,7 @@ function modelMatrix()
     let m = glm.mat4.create();
     glm.mat4.rotateZ(m, m, mesh.roll);
     glm.mat4.rotateX(m, m, mesh.pitch);
+    glm.mat4.rotateY(m, m, mesh.yaw);
 
     let out = glm.mat4.create();
     glm.mat4.mul(out, m, mesh.M);
@@ -327,6 +328,7 @@ function loadMesh(stl)
     // Reset pitch and roll
     mesh.roll = 0;
     mesh.pitch = 0;
+    mesh.yaw = 0;
 
     // Compile shader program for mesh
     mesh.prog = makeProgram(
@@ -510,13 +512,71 @@ function disableButtons()
 {
     document.getElementById("slice").disabled = true;
     document.getElementById("upload").disabled = true;
+    document.getElementById("rot_reset").disabled = true;
 }
 
 function enableButtons()
 {
     document.getElementById("slice").disabled = false;
     document.getElementById("upload").disabled = false;
+    document.getElementById("rot_reset").disabled = false;
 }
+
+document.getElementById("rot_reset").onclick = function(event) {
+    mesh.roll  = 0;
+    mesh.pitch = 0;
+    mesh.yaw = 0;
+    getMeshBounds();
+    renderSlice();
+    draw();
+}
+
+document.getElementById("rot_x_plus").onclick = function(event) {
+    mesh.pitch += Math.PI/2;
+    getMeshBounds();
+    renderSlice();
+    draw();
+}
+
+document.getElementById("rot_x_minus").onclick = function(event) {
+    mesh.pitch -= Math.PI/2;
+    getMeshBounds();
+    renderSlice();
+    draw();
+}
+
+
+document.getElementById("rot_y_plus").onclick = function(event) {
+    mesh.yaw += Math.PI/2;
+    getMeshBounds();
+    renderSlice();
+    draw();
+}
+
+document.getElementById("rot_y_minus").onclick = function(event) {
+    mesh.yaw -= Math.PI/2;
+    getMeshBounds();
+    renderSlice();
+    draw();
+}
+
+document.getElementById("rot_z_plus").onclick = function(event) {
+    mesh.roll  += Math.PI/2;
+    getMeshBounds();
+    renderSlice();
+    draw();
+}
+
+document.getElementById("rot_z_minus").onclick = function(event) {
+    mesh.roll  -= Math.PI/2;
+    mesh.pitch += 0;
+    getMeshBounds();
+    renderSlice();
+    draw();
+}
+
+
+
 
 module.exports = {'init': init,
                   'loadMesh': loadMesh,
