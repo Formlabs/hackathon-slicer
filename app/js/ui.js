@@ -1,5 +1,7 @@
 'use strict';
 
+let viewport = require('./viewport.js');
+
 function disableButtons()
 {
     document.getElementById("slice").disabled = true;

@@ -325,6 +325,28 @@ function getMeshBounds()
     mesh.bounds.zmax = _.max(xyz[2]);
 }
 
+function updateScale()
+{
+    // Create identity transform matrix
+    mesh.M = glm.mat4.create();
+
+    // Find bounds and center, then store them in matrix M
+    getMeshBounds();
+
+    let scale = ui.getStlScale() * printer.getGLscale();
+
+    // Store mesh transform matrix
+    mesh.M = glm.mat4.create();
+    glm.mat4.scale(mesh.M, mesh.M, [scale, scale, scale]);
+    glm.mat4.translate(mesh.M, mesh.M, [
+        -(mesh.bounds.xmin + mesh.bounds.xmax) / 2,
+        -(mesh.bounds.ymin + mesh.bounds.ymax) / 2,
+        -(mesh.bounds.zmin + mesh.bounds.zmax) / 2]);
+
+    // Recalculate mesh bounds with the transform matrix
+    getMeshBounds();
+}
+
 function loadMesh(stl)
 {
     // Clear the status field
@@ -344,21 +366,8 @@ function loadMesh(stl)
     // Store unique vertices
     mesh.verts = stl.positions;
 
-    // Create identity transform matrix
-    mesh.M = glm.mat4.create();
-
-    // Find bounds and center, then store them in matrix M
-    getMeshBounds();
-
-    let scale = ui.getStlScale() * printer.getGLscale();
-
-    // Store mesh transform matrix
-    mesh.M = glm.mat4.create();
-    glm.mat4.scale(mesh.M, mesh.M, [scale, scale, scale]);
-    glm.mat4.translate(mesh.M, mesh.M, [
-        -(mesh.bounds.xmin + mesh.bounds.xmax) / 2,
-        -(mesh.bounds.ymin + mesh.bounds.ymax) / 2,
-        -(mesh.bounds.zmin + mesh.bounds.zmax) / 2]);
+    // Work out mesh scale
+    updateScale();
 
     // Load vertex positions into a buffer
     let flattened = _.flatten(stl.positions);
@@ -401,7 +410,6 @@ function loadMesh(stl)
     mesh.triangles = stl.positions.length;
 
     // Get bounds with new transform matrix applied
-    getMeshBounds();
     mesh.loaded = true;
 
     renderSlice();
@@ -557,8 +565,11 @@ document.getElementById("rot_z_minus").onclick = function(event) {
     draw();
 }
 
-
-
+document.getElementById("mm").onchange = function(event) {
+    updateScale();
+    renderSlice();
+    draw();
+}
 
 module.exports = {'init': init,
                   'loadMesh': loadMesh,

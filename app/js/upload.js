@@ -5,7 +5,7 @@ let parseSTL = require('parse-stl');
 let viewport = require('./viewport.js');
 let ui = require('./ui.js');
 
-document.getElementById("upload").onchange = function(evt) {
+document.getElementById("upload").onchange = function(event) {
     let fileInput = document.getElementById("upload");
     let file = fileInput.files[0];
 
