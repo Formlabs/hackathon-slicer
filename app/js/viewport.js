@@ -35,7 +35,7 @@ function makeSlice()
     slice.prog = makeProgram(
         glslify(__dirname + '/../shaders/slice.vert'),
         glslify(__dirname + '/../shaders/slice.frag'),
-        ['model','bounds','frac'], ['v']);
+        ['model','bounds','frac','aspect'], ['v']);
 
     gl.bindTexture(gl.TEXTURE_2D, slice.tex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, resolution.x, resolution.y,
@@ -230,6 +230,8 @@ function drawQuad(quad)
     gl.vertexAttribPointer(quad.prog.attrib.v, 2, gl.FLOAT, false, 0, 0);
 
     gl.uniform1f(quad.prog.uniform.frac, quad.frac);
+    gl.uniform1f(quad.prog.uniform.aspect,
+            resolution.x / resolution.y);
     gl.uniform2f(quad.prog.uniform.bounds, mesh.bounds.zmin, mesh.bounds.zmax);
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -256,7 +258,7 @@ function makeQuad()
     quad.prog = makeProgram(
         glslify(__dirname + '/../shaders/quad.vert'),
         glslify(__dirname + '/../shaders/quad.frag'),
-        ['view','tex','frac','bounds'], ['v']);
+        ['view','tex','frac','aspect','bounds'], ['v']);
 
     quad.vert = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, quad.vert);
@@ -435,6 +437,8 @@ function renderSlice()
 
     // Load slice position and mesh bounds
     gl.uniform1f(slice.prog.uniform.frac, quad.frac);
+    gl.uniform1f(slice.prog.uniform.aspect,
+            resolution.x / resolution.y);
     gl.uniform2f(slice.prog.uniform.bounds, mesh.bounds.zmin, mesh.bounds.zmax);
 
     // Load mesh vertices
@@ -479,6 +483,7 @@ function renderSlice()
 function getSliceAt(frac)
 {
     quad.frac = frac;
+    document.getElementById("slider").valueAsNumber = frac * 100;
     draw();
     return renderSlice();
 }
