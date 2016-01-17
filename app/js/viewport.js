@@ -3,6 +3,7 @@
 let _ = require('underscore');
 let glslify = require('glslify')
 let glm = require('gl-matrix');
+let ch = require('convex-hull');
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -314,9 +315,11 @@ function getMeshBounds()
 {
     let M = modelMatrix();
 
-    let vs = _.map(mesh.verts, function(v){
+    let vs = _.map(mesh.ch, function(i){
         let out = glm.vec3.create();
-        glm.mat4.mul(out, M, [v[0], v[1], v[2], 1]);
+        glm.mat4.mul(out, M, [mesh.verts[i][0],
+                              mesh.verts[i][1],
+                              mesh.verts[i][2], 1]);
         return out;});
 
     // Find bounds and center, then store them in matrix M
@@ -373,6 +376,9 @@ function loadMesh(stl)
 
     // Store unique vertices
     mesh.verts = stl.positions;
+
+    // Store mesh's convex hull (as indices into vertex list)
+    mesh.ch = _.unique(_.flatten(ch(stl.positions)));
 
     // Work out mesh scale
     updateScale();

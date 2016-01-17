@@ -24,7 +24,8 @@
     "glslify": "^2.0.0",
     "underscore": "^1.8.0",
     "filesaver.js": "^0.2.0",
-    "jszip": "^2.5.0"
+    "jszip": "^2.5.0",
+    "convex-hull": "^1.0.0"
   },
   "browserify": {
     "transform": [
