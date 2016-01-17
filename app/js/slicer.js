@@ -72,8 +72,8 @@ document.getElementById("slice").onclick = function(event)
 
     // We map 3 inches to +/-1 on the X axis, so we use that ratio
     // to convert to Z in inches
-    let zrange_um = (bounds.zmax - bounds.zmin) * (3 * 25.4e3) / 2.;
-    let count = Math.floor(zrange_um / microns);
+    let zrange_mm = (bounds.zmax - bounds.zmin) / printer.getGLscale();
+    let count = Math.ceil(zrange_mm * 1000 / microns);
 
     zip = new JSZip();
     ui.setStatus("Slicing...");
