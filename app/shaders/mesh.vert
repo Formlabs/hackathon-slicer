@@ -9,5 +9,5 @@ varying mediump vec3 norm;
 void main() {
     gl_Position = view * model * vec4(v, 1);
     gl_Position.w = (gl_Position.z + 1.0);
-    norm = ((view * vec4(n, 1) + 1.0) / 2.0).xyz;
+    norm = normalize((view * vec4(n, 1)).xyz);
 }
