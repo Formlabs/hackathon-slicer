@@ -15,12 +15,12 @@ npm start
 ```
 
 ## License
-This tools is releated under the [MIT License](https://github.com/Formlabs/hackathon-slicer/blob/master/COPYING.md)
+This tool is releated under the [MIT License](https://github.com/Formlabs/hackathon-slicer/blob/master/COPYING.md)
 
 ## Disclaimer
-This was written by two folks with zero experience in modern javascript
-over the course of two days.  It's a cool demo, but shouldn't be considered
-industrial-strength software.
+This was written in two days by folks with minimal experience in modern Javascript.
+
+It's a cool demo, but shouldn't be considered industrial-strength software.
 
 ## Brought to you by
 ![Formlabs logo](https://github.com/Formlabs/hackathon-slicer/blob/master/logo.png)
