@@ -1,5 +1,7 @@
 ## About
-This project is a tiny slicer for DLP printers.
+This project is a simple slicer for DLP-based 3D printers.
+
+![Example screenshot](https://github.com/Formlabs/hackathon-slicer/blob/master/example.png)
 
 It runs in your browser, using WebGL and the stencil buffer to voxelize
 `.stl` files.  The resulting slices are delivered as a zip file full of
