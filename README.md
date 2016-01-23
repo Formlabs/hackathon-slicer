@@ -24,4 +24,4 @@ This was written in two days by folks with minimal experience in modern Javascri
 It's a cool demo, but shouldn't be considered industrial-strength software.
 
 ## Brought to you by
-[![Formlabs logo](https://github.com/Formlabs/hackathon-slicer/blob/master/logo.png)](http://http://formlabs.com/)
+[![Formlabs logo](https://github.com/Formlabs/hackathon-slicer/blob/master/logo.png)](http://formlabs.com/)
