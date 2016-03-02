@@ -427,7 +427,7 @@ function loadMesh(stl)
     mesh.loaded = true;
 
     renderSlice();
-    draw();
+    window.requestAnimationFrame(draw);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
