@@ -5,6 +5,7 @@ let parseSTL = require('parse-stl');
 
 require('./upload.js');
 require('./slicer.js');
+var JSZip = require("jszip");
 
 // Base-64 encoded example string, or false
 let sample = false;
@@ -16,7 +17,9 @@ function main()
         if (sample)
         {
             let buf = new Buffer(sample, 'base64');
-            let mesh = parseSTL(buf);
+            let zip = new JSZip(buf);
+            let stl = new Buffer(zip.files["example.stl"].asBinary(), 'binary');
+            let mesh = parseSTL(stl);
             viewport.loadMesh(mesh);
         }});
 }
