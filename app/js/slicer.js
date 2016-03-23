@@ -1,7 +1,7 @@
 'use strict';
 
 let fs = require('filesaver.js');
-let JSZip = require('JSZip');
+let JSZip = require('jszip');
 
 let viewport = require('./viewport.js');
 let printer = require('./printer.js');
